@@ -1,10 +1,10 @@
 # Gated Check-in for AWS CodeCommit with AWS Step Functions
-
+PS DevOps AoD artifact - Gated Check-in for AWS CodeCommit on Pull Request with AWS Step Functions
 ## Background
 
 A gated commit or gated check-in is a software integration pattern that reduces the chances for breaking a build (and often its associated tests) by committing changes into the main branch of version control. This pattern can be supported by a continuous integration (CI) server.
 
-However, if the customer want to apply gated check-in to AWS CodeCommit based on pull request, it is required that they have to manually configure and integrate AWS CodeBuild to enable the automation test like unit test, coverage test and etc as well as they have to manually change approval status on pull request based on test result. In addition to them, the customer also want to customize their build processes. For example, they may want to run, or not, some tests, or skip some task when you need to deploy a quick fix. 
+However, if the customer wants to apply gated check-in to AWS CodeCommit based on a pull request, they will be required to manually configure and integrate AWS CodeBuild to enable automation tests such as a unit test, coverage test, etc. and they have to manually change approval status on the pull request based on test results. In addition, if the customer may also want to customize their build processes. Examples of customization include choosing to or not to run some tests or skip certain tasks when you need to deploy a quick fix. 
 
 
 ## Project Overview
@@ -13,21 +13,21 @@ The Following diagrams show the overall architecture and workflow detail for ste
 
 ![artifact-arch-Page-5](https://user-images.githubusercontent.com/47220755/175829211-3cd86934-8dca-4bce-a5e1-3e50890ebe37.jpg)
 
-Based on the overall architecture above, depending on pull request status change  event on AWS CodeCommit event bridge rule filter the event and deliver event to target as  AWS Lambda. when Lambda received the event, it parse the event and then trigger AWS Stepfunctions for CI. when CI finished, Step Functions update CI result to Pull Request on comment and pull request approval status based on CI result.
+The following explanation is based on the architecture above. According to changes in the pull request status event on AWS CodeCommit, the event bridge rule filters the event and delivers the event to the target, which is AWS Lambda. When AWS Lambda receives the event, it checks the event if the customized build needed and then triggers AWS Step Functions for CI. When CI is finished, Step Functions updates the comment to the CI result on pull request and also updates pull request approval status based on the CI result.
 
 
 ![Detail-sfn](https://user-images.githubusercontent.com/47220755/175833302-d68fad9a-3bde-4ad1-a411-b915397d5a5c.png)
 
-The Workflow is consist of three parts
+The Workflow consists of three parts:
 
-1. CI Envirinment Creating 
+1. CI Envirinment Creating
 2. Run CI
 3. Clean Up CI Environment
 
 
 
 ## Getting Started
-This Soltuon was developed based on CDK so it is easily reusable for any AWS environment.
+This Solution was developed based on CDK(Cloud Developement Kit) to be easily reusable for any AWS environment.
 ### Prerequisites
 CDK V2
 AWS CLI
@@ -42,6 +42,7 @@ AWS CLI
 ## Future Improvements
 
 ## Clean Up
+
 ```
  $ cdk destroy
 ```
