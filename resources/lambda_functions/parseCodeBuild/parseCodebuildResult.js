@@ -6,10 +6,11 @@ const codebuild = new AWS.CodeBuild();
 exports.handler = async (event, context) => {
 	const pullRequest = event.PullRequestDetail;
 	const buildInfo = event.BuildDetail;
-	// const branchName = convertBranchName(pullRequest.sourceReference);
-	// const codebuildBadgeUrl = await getBadgeUrl(pullRequest.repositoryNames[0], pullRequest.pullRequestId);
-	// const branchBadgeUrl = `${codebuildBadgeUrl.split("&branch=")[0]}&branch=${branchName}`;
+	const branchName = convertBranchName(pullRequest.sourceReference);
+	const codebuildBadgeUrl = await getBadgeUrl(pullRequest.repositoryNames[0], pullRequest.pullRequestId);
+	const branchBadgeUrl = `${codebuildBadgeUrl.split("&branch=")[0]}&branch=${branchName}`;
 	const beforeCommitId = await getBeforeCommit(pullRequest.sourceCommit, pullRequest.repositoryNames[0]);
+
 	if (pullRequest.title.includes("@ContainerBuild")) {
 		const ecrUrl = `https://${process.env.AWS_REGION}.console.aws.amazon.com/ecr/repositories/private/${
 			context.invokedFunctionArn.split(":")[4]
@@ -25,7 +26,8 @@ exports.handler = async (event, context) => {
 			BuildDetail: buildInfo,
 			EventDetail: event.EventDetail,
 			Content: `## Container Image Build and Push 
-            \n\n **Current CodeBuild Status : ${buildInfo.CurrentStatus}**
+            \n\n **Current CodeBuild Status : ![](${branchBadgeUrl})**
+
             Container Image Pushed to [ECR](${ecrUrl})`
 		};
 		return output;
@@ -48,7 +50,7 @@ exports.handler = async (event, context) => {
 			RevisionId: pullRequest.revisionId,
 			BuildDetail: buildInfo,
 			EventDetail: event.EventDetail,
-			Content: `## Unit & Coverage Test Result\n\n **Current CodeBuild Status : ${buildInfo.CurrentStatus}**
+			Content: `## Unit & Coverage Test Result\n\n **Current CodeBuild Status : ![](${branchBadgeUrl})**
 		
 		
 - ${parseCodebuildReport(reportDetail)[0]}
@@ -62,28 +64,28 @@ Thank you :)`
 	}
 };
 
-// async function getBadgeUrl (repoName, prId) {
-// 	try {
-// 		const badgeinfo = await new Promise((resolve, reject) => {
-// 			const params = {
-// 				Name: `/${repoName}/PR/${prId}/BadgeUrl`
-// 			};
-// 			ssm.getParameter(params, (err, data) => {
-// 				if (err) {
-// 					console.info(err, err.stack);
-// 					reject(err);
-// 				} else {
-// 					console.log(data);
-// 					resolve(data);
-// 				}
-// 			});
-// 		});
+async function getBadgeUrl (repoName, prId) {
+	try {
+		const badgeinfo = await new Promise((resolve, reject) => {
+			const params = {
+				Name: `/${repoName}/PR/${prId}/BadgeUrl`
+			};
+			ssm.getParameter(params, (err, data) => {
+				if (err) {
+					console.info(err, err.stack);
+					reject(err);
+				} else {
+					console.log(data);
+					resolve(data);
+				}
+			});
+		});
 
-// 		return badgeinfo.Parameter.Value;
-// 	} catch (err) {
-// 		throw new Error(err);
-// 	}
-// }
+		return badgeinfo.Parameter.Value;
+	} catch (err) {
+		throw new Error(err);
+	}
+}
 
 async function getBuildReportArns (buildId) {
 	try {
@@ -166,4 +168,9 @@ function parseCodebuildReport (reportDetails) {
 		}
 	});
 	return testsSummary;
+}
+
+function convertBranchName (branch) {
+	const contertedBranchName = branch.split("refs/heads/").join("");
+	return contertedBranchName;
 }

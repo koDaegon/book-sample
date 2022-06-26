@@ -299,11 +299,11 @@
       "Comment": "A Wait state delays the state machine from continuing for a specified time.",
       "Type": "Wait",
       "Seconds": 10,
-      "Next": "Get Basic CI Status"
+      "Next": "Get CodeBuild Status"
     },
-    "Get Basic CI Status": {
+    "Get CodeBuild Status": {
       "Type": "Task",
-      "Next": "Check Basic CI Result",
+      "Next": "Check CodeBuild Result",
       "Parameters": {
         "Ids.$": "States.Array($.BuildDetail.BuildId)"
       },
@@ -315,7 +315,7 @@
         "CurrentStatus.$": "$.Builds[0].BuildStatus"
       }
     },
-    "Check Basic CI Result": {
+    "Check CodeBuild Result": {
       "Type": "Choice",
       "Choices": [
         {
