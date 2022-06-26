@@ -5,6 +5,8 @@ import { Construct } from "constructs";
 import { AccountPrincipal, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Iam } from "./Construct/iam";
 import { sfnCI } from "./Construct/SfnCI";
+import * as codecommit from "aws-cdk-lib/aws-codecommit";
+import * as path from "path";
 
 interface SfnCiStackProps extends StackProps {
 	ServiceName: string;
@@ -35,11 +37,16 @@ export class SfnCiStack extends Stack {
 			EcrRepo: intgEcr
 		});
 
-		new sfnCI(this, "sfn-ci", {
+		const codeRepo = new codecommit.Repository(this, "code-repository", {
+			repositoryName: props.RepoName,
+			code: codecommit.Code.fromDirectory(path.join(__dirname, "../example/application_repository/kdaegon-sample/"))
+		});
+
+		const sfn = new sfnCI(this, "sfn-ci", {
 			ServiceName: props.ServiceName,
 			EncryptionKey: encryptionKey,
 			AllowAccountIds: [props.DevOpsAccountId],
-			RepoName: props.RepoName, //repo name
+			RepoName: props.RepoName,
 			ServiceRoles: {
 				lambda: Roles.lambdaRole,
 				sfn: Roles.sfnRole,
@@ -47,5 +54,6 @@ export class SfnCiStack extends Stack {
 			},
 			AccountId: props.DevOpsAccountId
 		});
+		codeRepo.node.addDependency(sfn);
 	}
 }

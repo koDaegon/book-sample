@@ -10,5 +10,5 @@ const devops_account = app.node.tryGetContext("devops_account") || "681291798978
 new SfnCiStack(app, "SfnCiStack", {
 	ServiceName: "icn",
 	DevOpsAccountId: devops_account,
-	RepoName: "kdaegon-devops-aod-repo"
+	RepoName: "example-java-repo"
 });

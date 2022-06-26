@@ -1,0 +1,40 @@
+version: 0.2
+env:
+  shell: bash
+phases:
+  install:
+    runtime-versions:
+      java: corretto11
+    commands:
+      - apt-get update
+      - apt-get install -y jq
+
+  pre_build:
+    commands:
+      - echo "Get Branch Name"
+      - export SOURCE_BRANCH=$(echo $BRANCH_NAME | sed 's/refs\/heads\///g')
+      - echo "############## source branch name -> $SOURCE_BRANCH"
+    finally:
+  build:
+    commands:
+      - |
+        echo "Start Unit Test and Coverage Test"
+        chmod +x ./gradlew 
+        ./gradlew test --no-daemon
+        exit $?
+    finally:
+  post_build:
+    commands:
+    finally:
+artifacts:
+  files:
+    - ./build/reports/**/*
+reports:
+  kdaegon-jacoco-report:
+    files:
+      - "./build/reports/jacoco/jacoco.xml"
+    file-format: "JACOCOXML"
+  kdaegon-junit-report:
+    files:
+      - "**/*"
+    base-directory: "./build/reports/junitXml"
