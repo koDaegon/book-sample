@@ -19,7 +19,7 @@ exports.handler = async (event, context) => {
 		const output = {
 			BeforeCommitId: beforeCommitId,
 			AfterCommitId: pullRequest.sourceCommit,
-			ResultStatus: "REVOKE",
+			ResultStatus: buildInfo.CurrentStatus !== "SUCCEEDED" ? "REVOKE" : "APPROVE",
 			PullRequestId: pullRequest.pullRequestId,
 			RepositoryName: pullRequest.repositoryNames[0],
 			RevisionId: pullRequest.revisionId,
@@ -27,8 +27,9 @@ exports.handler = async (event, context) => {
 			EventDetail: event.EventDetail,
 			Content: `## Container Image Build and Push 
             \n\n **Current CodeBuild Status : ![](${branchBadgeUrl})**
-
-            Container Image Pushed to [ECR](${ecrUrl})`
+			
+			
+Container Image Pushed to [ECR](${ecrUrl})`
 		};
 		return output;
 	} else {
