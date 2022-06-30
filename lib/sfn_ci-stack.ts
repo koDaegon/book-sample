@@ -10,7 +10,7 @@ import * as path from "path";
 
 interface SfnCiStackProps extends StackProps {
 	ServiceName: string;
-	DevOpsAccountId: string;
+	AccountId: string;
 	RepoName: string;
 }
 
@@ -19,7 +19,7 @@ export class SfnCiStack extends Stack {
 		super(scope, id, props);
 
 		const encryptionKey = new Key(this, "encryptionKey", {
-			admins: [new AccountPrincipal(props.DevOpsAccountId)]
+			admins: [new AccountPrincipal(props.AccountId)]
 		});
 
 		const intgEcr = new Repository(this, "intgEcr", {
@@ -29,7 +29,7 @@ export class SfnCiStack extends Stack {
 		});
 
 		intgEcr.grantPullPush(new ServicePrincipal("codebuild.amazonaws.com"));
-		intgEcr.grantPullPush(new AccountPrincipal(props.DevOpsAccountId));
+		intgEcr.grantPullPush(new AccountPrincipal(props.AccountId));
 
 		const Roles = new Iam(this, "iam-roles", {
 			ServiceName: props.ServiceName,
@@ -45,14 +45,14 @@ export class SfnCiStack extends Stack {
 		const sfn = new sfnCI(this, "sfn-ci", {
 			ServiceName: props.ServiceName,
 			EncryptionKey: encryptionKey,
-			AllowAccountIds: [props.DevOpsAccountId],
+			AllowAccountIds: [props.AccountId],
 			RepoName: props.RepoName,
 			ServiceRoles: {
 				lambda: Roles.lambdaRole,
 				sfn: Roles.sfnRole,
 				codebuild: Roles.codebuildRole
 			},
-			AccountId: props.DevOpsAccountId
+			AccountId: props.AccountId
 		});
 		codeRepo.node.addDependency(sfn);
 	}
