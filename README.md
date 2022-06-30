@@ -4,7 +4,7 @@ PS DevOps AoD artifact - Gated Check-in for AWS CodeCommit using AWS Step Functi
 
 A gated commit or gated check-in is a software integration pattern that reduces the chances for breaking a build (and often its associated tests) by committing changes into the main branch of version control. This pattern can be supported by a continuous integration (CI) server.
 
-However, if the customer wants to apply gated check-in to AWS CodeCommit based on a pull request, they will be required to manually configure and integrate AWS CodeBuild to enable automation tests such as a unit test, coverage test, etc. and they have to manually change approval status on the pull request based on test results. In addition, if the customer may also want to customize their build processes. Examples of customization include choosing to or not to run some tests or skip certain tasks when you need to deploy a quick fix. 
+However, if the customer wants to apply gated check-in to AWS CodeCommit based on a pull request, they will be required to manually configure and integrate AWS CodeBuild to enable automation tests such as a unit test, coverage test, etc. and they have to manually change approval status on the pull request based on test results. In addition, this may be done if the customer may also want to customize their build processes. Examples of customization include choosing to or not to run some tests or skip certain tasks when you need to deploy a quick fix. 
 
 
 ## Project Overview
@@ -18,19 +18,19 @@ The following explanation is based on the architecture above. According to chang
 
 ![Detail-sfn](https://user-images.githubusercontent.com/47220755/175833302-d68fad9a-3bde-4ad1-a411-b915397d5a5c.png)
 
-Following the lifecycle of pull request on CodeCommit repository, Step Functions manages creating, running and deleteing build and test environment for CI and its workflow consists of three parts:
+Following the lifecycle of pull request on CodeCommit repository, Step Functions manages creating, running and deleting build and test environment for CI and its workflow consists of three parts:
 
 1) Create CI Environment
 
-     When pull request is created It is filtered to stage for creating the CI environment. Getting configuration values such as artifact bucket name and service role arn for CodeBuild from parameter store. Using configuration values step functiuons manage to create CodeBuild Project whether it is required container build based on pull request title. After creating CodeBuild Project, it manages to put CodeBuild Badge Url to parameter store.
+     When pull request is created, it is filtered to stage the creation of the CI environment. Then it Retrieves configuration values such as artifact bucket name and service role arn for CodeBuild from parameter store. Configuration values are used by step functions to manage the creation of CodeBuild Project whenrequired container build is based on pull request title. After creating CodeBuild Project, it manages to put CodeBuild Badge Url to parameter store.
 
 2) Build And Test Application on CI Environment
 
-     After creating the CI environment or when pull request is updated, Step Functions manages to trigger the CodeBuild for building and testing application. every 10 seconds it checks the build status and if it is not completed, it will repeat the process till it is completed. When the build status is completed, it triggers the lambda function to parse the CodeBuild result. Based on CodeBuid result Step Functions posts a comment for test result summary to pull request and updates pull request approval status.
+     After creating the CI environment or when pull request is updated, Step Functions manages to trigger the CodeBuild for building and testing application. Every 10 seconds it checks the build status and if it is not completed, it will repeat the process until it is completed. When the build status is completed, it triggers the lambda function to parse the CodeBuild result. Based on CodeBuid result Step Functions, it posts a comment for test result summary to pull request and updates pull request approval status.
      
 3) Delete CI Environment
 
-     When pull request is merged meeting the approval rule or is closed for some reason. Step Functions manages to clean up the CI enviroment which was created when pull request was created. 
+     When pull request is merged it will meet the approval rule or may be closed for some reason. Step Functions manages to clean up the CI enviroment which was created when pull request was created. 
 
 
 ## Getting Started
@@ -77,7 +77,7 @@ When CDK App is deployed, you have to manually create approval rule template and
 
 <img width="818" alt="image" src="https://user-images.githubusercontent.com/47220755/176768558-763ff9a5-96f2-49be-90b6-01a9701a46b6.png">
 
-> CDK is not currently supported to create approval rule template
+> CDK is not currently supported to create approval rule template.
 
 ## Example Usage
 You can create branch from main branch on CodeCommit to test the workflow.
@@ -141,11 +141,11 @@ When pull request is merged  or closed, Step Functions is triggered to delete th
 
 
 ## Clean Up
-Make sure ECR repository has empty then run following command
+Make sure ECR repository has emptied then run following command
 ```bash
 # destroy the cdk stack
  $ cdk destroy
 ```
 
 ## Wrap Up
-Using AWS Stepfunctions, It provides a functionality to automatically configure the gated check-in for AWS Codecommit based on pull request life cycle. Furthermore, If you want to have your own customized build, you can update `resources/lambda_functions/parseEvent/SfnTrigger.js` function to parse the keyword that you want to customize on pull request title and update `resources/StepFunctions/sfnCI.asl.json` for validating choice before the creating CodeBuild project state. Lastly, writing your own build script under `build_scripts` directory on your repository. 
+AWS Stepfunctions provides the functionality to automatically configure the gated check-in for AWS Codecommit based on pull request life cycle. Furthermore, If you want to have your own customized build, you can update `resources/lambda_functions/parseEvent/SfnTrigger.js` function to parse the keyword that you want to customize on pull request title and update `resources/StepFunctions/sfnCI.asl.json` for validating choice before the creating CodeBuild project state. Lastly, writing your own build script under `build_scripts` directory on your repository. 
