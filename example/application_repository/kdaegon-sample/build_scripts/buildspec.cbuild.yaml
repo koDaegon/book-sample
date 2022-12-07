@@ -42,6 +42,8 @@ phases:
       - |
         echo "### Pushing Container Image ###"
         docker push $REPOSITORY_URI:$IMAGE_TAG
+      - cat ./build_scripts/imageDef.json | envsubst > $CODEBUILD_SRC_DIR/imagedefinitions.json
+      - cat $CODEBUILD_SRC_DIR/imagedefinitions.json
   post_build:
     commands:
       - echo "Pushed to ${IMAGE_TAG}" >> build_output.txt
