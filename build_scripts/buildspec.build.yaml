@@ -15,9 +15,8 @@ phases:
     commands:
       - echo "Print awscli version"
       - aws --version
-      - export MY_ECR="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}"
       - echo "### SRC_VERISON-> ${CODEBUILD_RESOLVED_SOURCE_VERSION} | Logginging to ECR"
-      - docker login --username AWS -p $(aws ecr get-login-password --region ${REGION}) ${MY_ECR}
+      - docker login --username AWS -p $(aws ecr get-login-password --region ${REGION}) ${ECR_REPO_URI}
       - export TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION}
       - export TAG=$(echo $TAG | sed -e "s/\.//g"| tr '[:upper:]' '[:lower:]')
       - export TAG=$(echo "${TAG:0:8}")
@@ -31,22 +30,21 @@ phases:
   build:
     commands:
       - |
-        echo "### Building Container Image ###"
+        echo "### Building initial Container Image ###"
         echo $CODEBUILD_SRC_DIR
         echo Build started on `date`
         echo Building the Docker image...
-        docker build -t $REPOSITORY_URI:latest ./
+        docker build -t $ECR_REPO_URI:latest ./
         docker images
-        docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+        docker tag $ECR_REPO_URI:latest $ECR_REPO_URI:$IMAGE_TAG
 
       - |
         echo "### Pushing Container Image ###"
-        docker push $REPOSITORY_URI:$IMAGE_TAG
+        docker push $ECR_REPO_URI:$IMAGE_TAG
       - cat ./build_scripts/imageDef.json | envsubst > $CODEBUILD_SRC_DIR/imagedefinitions.json
       - cat $CODEBUILD_SRC_DIR/imagedefinitions.json
   post_build:
     commands:
-      - echo "Pushed to ${IMAGE_TAG}" >> build_output.txt
 artifacts:
   files:
-    - build_output.txt
+    - ./imagedefinitions.json
