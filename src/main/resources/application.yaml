@@ -5,7 +5,7 @@ springdoc:
     path: /api-doc.html
     operations-sorter: method 
 server:
-  port: 80
+  port: 8080
   error:
     whitelabel:
       enabled: off

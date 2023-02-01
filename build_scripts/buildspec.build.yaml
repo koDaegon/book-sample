@@ -26,7 +26,7 @@ phases:
       - |
         echo "Start Unit Test and Coverage Test"
         chmod +x ./gradlew 
-        ./gradlew clean build  -x test --no-daemon
+        ./gradlew clean build --no-daemon
   build:
     commands:
       - |
@@ -48,3 +48,15 @@ phases:
 artifacts:
   files:
     - ./imagedefinitions.json
+reports:
+  jacoco-report:
+    files:
+      - "./build/reports/jacoco/jacoco.xml"
+    file-format: "JACOCOXML"
+  junit-report:
+    files:
+      - "**/*"
+    base-directory: "./build/reports/junitXml"
+cache:
+  paths:
+    - '/root/.gradle/caches/**/*'
