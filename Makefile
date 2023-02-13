@@ -2,8 +2,8 @@
 run: compile
 	@./gradlew bootRun
 
-.PHONY: compile
-compile:
+.PHONY: build
+build:
 	@./gradlew build
 
 clean:
