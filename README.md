@@ -23,11 +23,12 @@
 
 
 **Baseline Setup**
+버전 확인을 통해 설치 확인 후 baseline 파일을 통해 어플리케이션상의 암호 및 자격증명의 바운더리를 설정할 수 있습니다.
 ```bash
 $ detect-secrets --version
 $ detect-secrets scan > .secrets.baseline
 ```
-버전 확인을 통해 설치 확인 후 baseline 파일을 통해 어플리케이션상의 암호 및 자격증명의 바운더리를 설정할 수 있습니다.
+
 
 
 
@@ -42,7 +43,7 @@ $ gradlew clean build -x test
 $ docker build -t book-sample:latest .
 $ docker run -p 8080:8080  --name sample-app  --rm book-sample:latest
 ```
-어플리케이션이 정상적으로 실행되었다면 아래 주소를 통해 swagger-ui 화면을 확일 할 수 있습니다.
+어플리케이션이 정상적으로 실행되었다면 아래 주소를 통해 swagger-ui 화면을 확인 할 수 있습니다.
 ```
 http://localhost:8080/swagger-ui/index.html
 ```
