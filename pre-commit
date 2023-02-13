@@ -4,7 +4,7 @@ echo "********************************************************************"
 echo "Testing secrets analysis before commit"
 echo "********************************************************************"
 
-$ git diff --staged --name-only -z | xargs -0 detect-secrets-hook --baseline .secrets-baseline
+git diff --staged --name-only -z | xargs -0 detect-secrets-hook --baseline .secrets.baseline
 
 status=$?
 

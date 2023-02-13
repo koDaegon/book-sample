@@ -93,3 +93,11 @@ task testCoverage(type: Test) {
 	tasks['jacocoTestReport'].mustRunAfter(tasks['test'])
 	tasks['jacocoTestCoverageVerification'].mustRunAfter(tasks['jacocoTestReport'])
 }
+
+task installLocalGitHook(type: Copy){
+    from new File(rootProject.rootDir, 'scripts/pre-commit')
+    into { new File(rootProject.rootDir, '.git/hooks')}
+    fileMode 0775
+}
+
+build.dependsOn installLocalGitHook

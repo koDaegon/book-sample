@@ -22,7 +22,7 @@ server:
     url: jdbc:h2:file:~/h2/testDB;AUTO_SERVER=TRUE
     driver-class-name: org.h2.Driver
     username: sa
-    password: 12345
+    password: 
   jpa:
     database: h2
     hibernate:
