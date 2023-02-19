@@ -1,11 +1,27 @@
 #!/bin/sh
 
+# Declare an empty array
+declare -a status
+
 echo "********************************************************************"
 echo "Testing secrets analysis before commit"
 echo "********************************************************************"
 
 git diff --staged --name-only -z | xargs -0 detect-secrets-hook --baseline .secrets.baseline
+status[0]=$?
 
-status=$?
 
-exit $status
+echo "********************************************************************"
+echo "Linting Dockerfile"
+echo "********************************************************************"
+
+docker run --rm -i hadolint/hadolint < Dockerfile
+status[1]=$?
+
+
+# Check the exit status of each command
+for s in "${status[@]}"; do
+  if [ $s -ne 0 ]; then
+    exit 1
+  fi
+done
