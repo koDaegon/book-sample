@@ -46,13 +46,16 @@ phases:
         kubectl config current-context
         kubectl get pod -A  
         
-        cd kubernetes
-        sed -i "s+$MY_ECR.*+$MY_ECR:$IMAGE_TAG+g"  deployment.yaml
+        cd k8s-manifests
+        cat deployment-template.yaml | envsubst > deployment.yaml
         
         cat deployment.yaml
         
         kubectl apply -f deployment.yaml
         kubectl rollout status deployment deployment-demo -n demo
+
+        kubectl apply -f svc.yaml
+        kubectl apply -f ingress.yaml
       
       - cd ${CODEBUILD_SRC_DIR}
       - echo "kubectl config current-context" > deploy_output.txt  

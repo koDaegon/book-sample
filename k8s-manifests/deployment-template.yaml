@@ -20,7 +20,7 @@ spec:
         app.kubernetes.io/name: app-demo
     spec:
       containers:
-      - image: {image_addr}
+      - image: ${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-2.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}
         name: app-demo
         imagePullPolicy: Always
         ports:
