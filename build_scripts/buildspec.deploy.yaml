@@ -74,7 +74,7 @@ phases:
         cat ./values-template.yaml | envsubst > ./demo/values.yaml
 
         cat ./demo/values.yaml
-        helm install demo ./demo -f ./demo/values.yaml
+        helm upgrade --install demo ./demo -f ./demo/values.yaml
         kubectl rollout status deployment deployment-demo -n demo
 
       - cd ${CODEBUILD_SRC_DIR}
