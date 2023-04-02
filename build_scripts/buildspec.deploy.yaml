@@ -11,11 +11,6 @@ phases:
       - echo "Install kubectl ..."
       - curl -LO "https://dl.k8s.io/release/v1.23.16/bin/linux/amd64/kubectl"
       - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-      - echo "Install awscli" 
-      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-      - unzip awscliv2.zip
-      - ls -l /root/.pyenv/shims/aws
-      - ./aws/install --bin-dir /root/.pyenv/shims --install-dir /usr/local/aws-cli --update
   pre_build:
     commands:
       - |
