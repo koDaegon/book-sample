@@ -17,4 +17,5 @@ service:
 
 ingress:
   name: ingress-demo
-  subnets: ${PUB_SUB_A}, ${PUB_SUB_C}
+  subnetA: ${PUB_SUB_A}
+  subnetC: ${PUB_SUB_C}
