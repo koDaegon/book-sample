@@ -4,6 +4,8 @@ env:
   parameter-store:
     ASSUME_ROLE: /eks/role/arn
     IMAGE_TAG: /apprepo/image/main
+    PUB_SUB_A: /base/pub/subnet/a
+    PUB_SUB_C: /base/pub/subnet/c
 
 phases:
   install:
@@ -48,14 +50,19 @@ phases:
         
         cd k8s-manifests
         cat deployment-template.yaml | envsubst > deployment.yaml
+        cat ingress-template.yaml | envsubst > ingress.yaml
         
         cat deployment.yaml
+        cat ingress.yaml
         
         kubectl apply -f deployment.yaml
         kubectl rollout status deployment deployment-demo -n demo
 
         kubectl apply -f svc.yaml
+        kubectl rollout status svc service-demo -n demo
+        
         kubectl apply -f ingress.yaml
+        kubectl rollout status ingress ingress-demo -n demo
       
       - cd ${CODEBUILD_SRC_DIR}
       - echo "kubectl config current-context" > deploy_output.txt  
