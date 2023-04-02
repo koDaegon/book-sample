@@ -22,6 +22,11 @@ public class BookController {
     private final BookService bookService;
     private final CommonBookMapper commonBookMapper;
 
+    @GetMapping("/{value}")
+    public String echo(@PathVariable String value) {
+        return "Request URL : " + value;
+    }
+
     @GetMapping("/books/{bookId}")
     public ResponseEntity<CommonBookMessage> getBook(@PathVariable("bookId") final Long id) {
         Book book = bookService.get(id);
