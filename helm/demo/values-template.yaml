@@ -1,23 +1,20 @@
+namespace:
+  name: demo
+app:
+  name: app-demo
+deployment:
+  name: deployment-demo
+  replicas: 2
 image:
   repository: ${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-2.amazonaws.com/${ECR_REPO}
   tag: ${IMAGE_TAG}
-
-namespace: demo
-
-replicas: 2
-
+container:
+  port: 8080
 service:
+  name: service-demo
   type: NodePort
   port: 80
 
 ingress:
-  annotations:
-    alb.ingress.kubernetes.io/ip-address-type: ipv4
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
-    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=60
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/subnets: ${PUB_SUB_A},${PUB_SUB_C}
-    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=30
-    alb.ingress.kubernetes.io/target-type: ip
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/backend-protocol: HTTP
+  name: ingress-demo
+  subnets: ${PUB_SUB_A}, ${PUB_SUB_C}
