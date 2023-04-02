@@ -1,0 +1,12 @@
+[
+	{
+		"name": "app",
+		"imageUri": "$REPOSITORY_URI:$IMAGE_TAG",
+		"portMappings": [
+			{
+				"containerPort": 8080,
+				"hostPort": 8080
+			}
+		]
+	}
+]

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Declare an empty array
+declare -a status
+
+
+echo "********************************************************************"
+echo "Linting Dockerfile"
+echo "********************************************************************"
+
+docker run --rm -i hadolint/hadolint < Dockerfile
+status[0]=$?
+
+
+# Check the exit status of each command
+for s in "${status[@]}"; do
+  if [ $s -ne 0 ]; then
+    exit 1
+  fi
+done
