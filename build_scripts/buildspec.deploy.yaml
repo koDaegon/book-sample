@@ -75,13 +75,12 @@ phases:
 
         cat ./demo/values.yaml
         helm upgrade --install -n test demo ./demo -f ./demo/values.yaml
-        kubectl rollout status deployment deployment-demo -n demo
+        kubectl rollout status deployment deployment-demo -n test
 
       - cd ${CODEBUILD_SRC_DIR}
       - echo "kubectl config current-context" > deploy_output.txt  
   post_build:
     commands:
-      - kubectl get svc -n demo
 artifacts:
   files:
     - deploy_output.txt

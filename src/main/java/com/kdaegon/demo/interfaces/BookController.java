@@ -24,7 +24,7 @@ public class BookController {
 
     @GetMapping("/{value}")
     public String echo(@PathVariable String value) {
-        return "Request URL : " + value;
+        return "Request Url : " + value;
     }
 
     @GetMapping("/books/{bookId}")
