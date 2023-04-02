@@ -7,8 +7,6 @@ env:
 
 phases:
   install:
-    runtime-versions:
-      correctto: 11
     commands:
       - echo "Install kubectl ..."
       - curl -LO "https://dl.k8s.io/release/v1.23.16/bin/linux/amd64/kubectl"
@@ -24,9 +22,9 @@ phases:
         echo "## Check aws cli and kubectl ##"
         aws --version
         kubectl version --client
-      - export TAG=$(<${CODEBUILD_SRC_DIR_BuildArtifact}/build_output.txt)
+      # - export TAG=$(<${CODEBUILD_SRC_DIR_BuildArtifact}/build_output.txt)
       - export MY_ECR="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}"
-      - echo ${TAG}
+      - echo ${IMAGE_TAG}
       - echo ${MY_ECR}
       - |
         export ASSUME_SESSION_NAME="codebuild-$(date +%s)"
@@ -54,7 +52,7 @@ phases:
         kubectl get pod -A  
         
         cd kubernetes
-        sed -i "s+$MY_ECR.*+$MY_ECR:$TAG+g"  deployment.yaml
+        sed -i "s+$MY_ECR.*+$MY_ECR:$IMAGE_TAG+g"  deployment.yaml
         
         cat deployment.yaml
         

@@ -140,6 +140,9 @@ Resources:
       Source:
         Type: CODEPIPELINE
         BuildSpec: build_scripts/buildspec.build.yaml
+      Cache:
+        Type: S3
+        Location: !Ref ArtifactBucket
   DeployProject:
     Type: AWS::CodeBuild::Project
     Properties:

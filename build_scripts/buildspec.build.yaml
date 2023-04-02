@@ -53,3 +53,6 @@ phases:
 artifacts:
   files:
     - build_output.txt
+cache:
+  paths:
+    - '/root/.gradle/caches/**/*'
