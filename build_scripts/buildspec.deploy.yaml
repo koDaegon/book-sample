@@ -1,62 +1,71 @@
 version: 0.2
 env:
-  shell: bash
   git-credential-helper: yes
-  variables:
-    REGION: "ap-northeast-2"
+  parameter-store:
+    ASSUME_ROLE: /eks/role/arn
+    IMAGE_TAG: /apprepo/image/main
+
 phases:
   install:
     runtime-versions:
-      java: corretto11
+      correctto: 11
     commands:
-      - apt-get update
-      - apt-get install -y jq
+      - echo "Install kubectl ..."
+      - curl -LO "https://dl.k8s.io/release/v1.23.16/bin/linux/amd64/kubectl"
+      - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+      - echo "Install awscli" 
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - unzip awscliv2.zip
+      - ls -l /root/.pyenv/shims/aws
+      - ./aws/install --bin-dir /root/.pyenv/shims --install-dir /usr/local/aws-cli --update
   pre_build:
     commands:
-      - echo "Print awscli version"
-      - aws --version
-      - echo "### SRC_VERISON-> ${CODEBUILD_RESOLVED_SOURCE_VERSION} | Logginging to ECR"
-      - docker login --username AWS -p $(aws ecr get-login-password --region ${REGION}) ${ECR_REPO_URI}
-      - export TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION}
-      - export TAG=$(echo $TAG | sed -e "s/\.//g"| tr '[:upper:]' '[:lower:]')
-      - export TAG=$(echo "${TAG:0:8}")
-      - export IMAGE_TAG="${TAG}"
-      - export REPOSITORY_URI="${MY_ECR}"
-      - echo "## TAG-> ${TAG}"
       - |
-        echo "Start Unit Test and Coverage Test"
-        chmod +x ./gradlew 
-        ./gradlew clean build --no-daemon
+        echo "## Check aws cli and kubectl ##"
+        aws --version
+        kubectl version --client
+      - export TAG=$(<${CODEBUILD_SRC_DIR_BuildArtifact}/build_output.txt)
+      - export MY_ECR="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}"
+      - echo ${TAG}
+      - echo ${MY_ECR}
+      - |
+        export ASSUME_SESSION_NAME="codebuild-$(date +%s)"
+
+        echo "ASSUME_ROLE_ARN=${ASSUME_ROLE}"
+        aws sts assume-role --role-arn ${ASSUME_ROLE} --role-session-name ${ASSUME_SESSION_NAME} --output json > config.json
+        
   build:
     commands:
       - |
-        echo "### Building initial Container Image ###"
-        echo $CODEBUILD_SRC_DIR
-        echo Build started on `date`
-        echo Building the Docker image...
-        docker build -t $ECR_REPO_URI:latest ./
-        docker images
-        docker tag $ECR_REPO_URI:latest $ECR_REPO_URI:$IMAGE_TAG
+        echo "Set up eks config ..."
+        export AWS_ACCESS_KEY_ID_OLD=${AWS_ACCESS_KEY_ID}
+        export AWS_SECRET_ACCESS_KEY_OLD=${AWS_SECRET_ACCESS_KEY}
+        export AWS_SESSION_TOKEN_OLD=${AWS_SESSION_TOKEN}
+
+        export AWS_ACCESS_KEY_ID=$(cat config.json | jq ".Credentials.AccessKeyId" | tr -d '"')
+        export AWS_SECRET_ACCESS_KEY=$(cat config.json | jq ".Credentials.SecretAccessKey" | tr -d '"')
+        export AWS_SESSION_TOKEN=$(cat config.json | jq ".Credentials.SessionToken" | tr -d '"')
+        
+        aws eks --region ap-northeast-2 update-kubeconfig --name kdaegon-sds-demo
 
       - |
-        echo "### Pushing Container Image ###"
-        docker push $ECR_REPO_URI:$IMAGE_TAG
-      - cat ./build_scripts/imageDef.json | envsubst > $CODEBUILD_SRC_DIR/imagedefinitions.json
-      - cat $CODEBUILD_SRC_DIR/imagedefinitions.json
+        echo "### Deploy k8s manifest file"
+        kubectl config current-context
+        kubectl get pod -A  
+        
+        cd kubernetes
+        sed -i "s+$MY_ECR.*+$MY_ECR:$TAG+g"  deployment.yaml
+        
+        cat deployment.yaml
+        
+        kubectl apply -f deployment.yaml
+        kubectl rollout status deployment deployment-demo -n demo
+      
+      - cd ${CODEBUILD_SRC_DIR}
+      - echo "kubectl config current-context" > deploy_output.txt  
   post_build:
     commands:
+      - kubectl get svc -n demo
 artifacts:
   files:
-    - ./imagedefinitions.json
-reports:
-  jacoco-report:
-    files:
-      - "./build/reports/jacoco/jacoco.xml"
-    file-format: "JACOCOXML"
-  junit-report:
-    files:
-      - "**/*"
-    base-directory: "./build/reports/junitXml"
-cache:
-  paths:
-    - '/root/.gradle/caches/**/*'
+    - deploy_output.txt
