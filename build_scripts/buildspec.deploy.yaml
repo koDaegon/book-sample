@@ -58,11 +58,8 @@ phases:
         kubectl apply -f deployment.yaml
         kubectl rollout status deployment deployment-demo -n demo
 
-        kubectl apply -f svc.yaml
-        kubectl rollout status svc service-demo -n demo
-        
+        kubectl apply -f svc.yaml        
         kubectl apply -f ingress.yaml
-        kubectl rollout status ingress ingress-demo -n demo
       
       - cd ${CODEBUILD_SRC_DIR}
       - echo "kubectl config current-context" > deploy_output.txt  
