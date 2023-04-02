@@ -70,15 +70,15 @@ phases:
       - |
         echo "### Deploy helm chart"
         
-        cd helm/demo
-        cat values-template.yaml envsubst > values.yaml
+        cd helm
+        cat ./demo/values-template.yaml envsubst > ./demo/values.yaml
 
-        cat values.yaml
-        cd ..
-        helm upgrade --values ./demo/values.yaml demo ./demo
+        cat ./demo/values.yaml
+        helm install --values ./demo/values.yaml demo ./demo
         helm status demo
         kubectl rollout status deployment deployment-demo -n demo
 
+      - cd ${CODEBUILD_SRC_DIR}
       - echo "kubectl config current-context" > deploy_output.txt  
   post_build:
     commands:
