@@ -46,7 +46,10 @@ phases:
       # - cat $CODEBUILD_SRC_DIR/imagedefinitions.json
   post_build:
     commands:
-      - echo "Pushed to ${IMAGE_TAG}" >> build_output.txt
+      - |
+        echo "### Pushing Container Image Tag to SSM###"
+        aws ssm put-parameter --name /apprepo/image/main --value $IMAGE_TAG --overwrite
+      - echo "${IMAGE_TAG}" >> build_output.txt
 artifacts:
   files:
     - build_output.txt

@@ -125,6 +125,7 @@ Resources:
         Type: !Ref EnvironmentType
         ComputeType: !Ref BuildComputeType
         Image: !Ref BuildImageName
+        PrivilegedMode: true
         EnvironmentVariables:
           - Name: BRANCH_NAME
             Value: !Ref Branch
@@ -171,3 +172,10 @@ Resources:
       Source:
         Type: CODEPIPELINE
         BuildSpec: build_scripts/buildspec.deploy.yaml
+  ImageTagParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /apprepo/image/main
+      Type: String
+      Value: default
+      Description: Main branch imagen tag
