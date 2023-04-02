@@ -1,5 +1,5 @@
 namespace:
-  name: demo
+  name: test
 app:
   name: app-demo
 deployment:
