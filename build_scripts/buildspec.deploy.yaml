@@ -70,9 +70,12 @@ phases:
       - |
         echo "### Deploy helm chart"
         
-        cd helm
+        cd helm/demo
         cat values-template.yaml envsubst > values.yaml
-        helm upgrade --install demo --values ./values.yaml
+
+        cat values.yaml
+        cd ..
+        helm upgrade --values ./demo/values.yaml demo ./demo
         helm status demo
         kubectl rollout status deployment deployment-demo -n demo
 
