@@ -71,7 +71,7 @@ phases:
         echo "### Deploy helm chart"
         
         cd helm
-        cat ./demo/values-template.yaml envsubst > ./demo/values.yaml
+        cat ./demo/values-template.yaml | envsubst > ./demo/values.yaml
 
         cat ./demo/values.yaml
         helm install --values ./demo/values.yaml demo ./demo
