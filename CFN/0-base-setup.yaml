@@ -164,36 +164,6 @@ Resources:
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Sid: DenyInsecureAccess
-            Effect: Deny
-            Principal: "*"
-            Action: "s3:*"
-            Resource:
-              - !Sub "arn:aws:s3:::${TerraformBackendBucket}"
-              - !Sub "arn:aws:s3:::${TerraformBackendBucket}/*"
-            Condition:
-              Bool:
-                aws:SecureTransport: false
-          - Sid: EnforceEncryption
-            Effect: Deny
-            Principal: "*"
-            Action: 
-              - "s3:PutObject"
-            Resource:
-              - !Sub "arn:aws:s3:::${TerraformBackendBucket}/*"
-            Condition:
-              StringNotEquals:
-                s3:x-amz-server-side-encryption: "AES256"
-          - Sid: DenyUnencryptedObjectUploads
-            Effect: Deny
-            Principal: "*"
-            Action: 
-              - "s3:PutObject"
-            Resource:
-              - !Sub "arn:aws:s3:::${TerraformBackendBucket}/*"
-            Condition:
-              'Null':
-                s3:x-amz-server-side-encryption: "true"
           - Sid: BucketAccess
             Effect: Allow
             Principal:
