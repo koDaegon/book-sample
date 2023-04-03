@@ -3,9 +3,11 @@ env:
   git-credential-helper: yes
   parameter-store:
     ASSUME_ROLE: /eks/role/arn
-    IMAGE_TAG: /apprepo/image/main
+    IMAGE_TAG: /book/sample/main/tag
     PUB_SUB_A: /base/pub/subnet/a
     PUB_SUB_C: /base/pub/subnet/c
+  variables:
+    CLUSTER_NAME: <cluster_name>
 
 phases:
   install:
@@ -45,7 +47,7 @@ phases:
         export AWS_SECRET_ACCESS_KEY=$(cat config.json | jq ".Credentials.SecretAccessKey" | tr -d '"')
         export AWS_SESSION_TOKEN=$(cat config.json | jq ".Credentials.SessionToken" | tr -d '"')
         
-        aws eks --region ap-northeast-2 update-kubeconfig --name kdaegon-sds-demo
+        aws eks --region ap-northeast-2 update-kubeconfig --name $CLUSTER_NAME
 
       - |
         echo "### Deploy k8s manifest file"
@@ -53,34 +55,35 @@ phases:
         kubectl get pod -A  
         
         cd k8s-manifests
-        # cat deployment-template.yaml | envsubst > deployment.yaml
-        # cat ingress-template.yaml | envsubst > ingress.yaml
+        cat deployment-template.yaml | envsubst > deployment.yaml
+        cat ingress-template.yaml | envsubst > ingress.yaml
         
-        # cat deployment.yaml
-        # cat ingress.yaml
+        cat deployment.yaml
+        cat ingress.yaml
         
-        # kubectl apply -f deployment.yaml
-        # kubectl rollout status deployment deployment-demo -n demo
+        kubectl apply -f deployment.yaml
+        kubectl rollout status deployment deployment-demo -n demo
 
-        # kubectl apply -f svc.yaml        
-        # kubectl apply -f ingress.yaml
+        kubectl apply -f svc.yaml
+        kubectl apply -f ingress.yaml
       
-      - cd ${CODEBUILD_SRC_DIR}
+      # - cd ${CODEBUILD_SRC_DIR}
 
-      - |
-        echo "### Deploy helm chart"
+      # - |
+      #   echo "### Deploy helm chart"
         
-        cd helm
-        cat ./values-template.yaml | envsubst > ./demo/values.yaml
+      #   cd helm
+      #   cat ./values-template.yaml | envsubst > ./demo/values.yaml
 
-        cat ./demo/values.yaml
-        helm upgrade --install -n test demo ./demo -f ./demo/values.yaml
-        kubectl rollout status deployment deployment-demo -n test
+      #   cat ./demo/values.yaml
+      #   helm upgrade --install -n test demo ./demo -f ./demo/values.yaml
+      #   kubectl rollout status deployment deployment-demo -n test
 
-      - cd ${CODEBUILD_SRC_DIR}
-      - echo "kubectl config current-context" > deploy_output.txt  
   post_build:
     commands:
+      - |
+        cd ${CODEBUILD_SRC_DIR}
+        echo "Deploy image tag : ${IMAGE_TAG}" > deploy_output.txt
 artifacts:
   files:
     - deploy_output.txt

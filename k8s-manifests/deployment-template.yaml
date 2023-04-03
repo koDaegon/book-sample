@@ -2,12 +2,12 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: demo
+  name: book
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace : demo
+  namespace : book
   name : deployment-demo
 spec:
   replicas: 2
