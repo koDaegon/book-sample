@@ -1,7 +1,7 @@
 # Book Sample SpringBoot 앱을 활용한 EKS CICD Hands-On
 
 ## 실습 순서
-### [1. 클러스터 및 실습 환경 셋업](docs/1.Setup.md)
+### [1. 클러스터 및 실습 환경 셋업](./docs/1.Setup.md)
 
 ### [2. AWS Native 서비스를 이용해 CI/CD 구성하기](docs/2.AWS_Native_CICD.md)
 
