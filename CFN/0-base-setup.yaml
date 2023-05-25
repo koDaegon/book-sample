@@ -1,13 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Create a S3 bucket and DynamoDB table for Terraform Backend
 Parameters:
-  BucketName:
-    Description: "Name of the S3 Bucket you want to create for Terraform Backend"
-    Type: String
-  DDBTableName:
-    Description: "Name of the DDB Table you want to create for Terraform Backend"
-    Type: String
-  InfraProvisionRoleName:
+  WorkShopAdminRoleName:
     Description: "Name of the IAM Role you want to create for Terraform Backend"
     Type: String
 
@@ -140,97 +134,40 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       Domain: VPC
-  # S3 Bucket for Terraform State
-  TerraformBackendBucket:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: !Ref BucketName
-      VersioningConfiguration:
-        Status: Enabled
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: AES256
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: True
-        BlockPublicPolicy: True
-        IgnorePublicAcls: True
-        RestrictPublicBuckets: True
-  # Bucket policy for Terrafrom State
-  TerraformBackendBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref TerraformBackendBucket
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Sid: BucketAccess
-            Effect: Allow
-            Principal:
-              AWS:
-                - !Sub arn:aws:iam::${AWS::AccountId}:root
-                - !GetAtt InfraProvisioningRole.Arn
-            Action: 
-              - "s3:*"
-            Resource:
-              - !Sub "arn:aws:s3:::${TerraformBackendBucket}"
-              - !Sub "arn:aws:s3:::${TerraformBackendBucket}/*"
-  # DynamoDB for State locking
-  TerraformBackendLockTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Ref DDBTableName
-      BillingMode: PROVISIONED
-      AttributeDefinitions:
-        - AttributeName: "LockID"
-          AttributeType: "S"
-      KeySchema: 
-        - AttributeName: LockID
-          KeyType: "HASH"
-      ProvisionedThroughput: 
-        ReadCapacityUnits: "5"
-        WriteCapacityUnits: "5"
 
-      Tags: 
-        - Key: Name
-          Value: !Sub TableName
-  # Infra Provisioning Role
-  InfraProvisioningRole:
+  # Workshop Admin Role
+  WorkShopAdminRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Ref InfraProvisionRoleName
+      RoleName: !Ref WorkShopAdminRoleName
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Action: [ "sts:AssumeRole" ]
             Effect: Allow
             Principal:
-              Service: [ "s3.amazonaws.com", "dynamodb.amazonaws.com", "codebuild.amazonaws.com", "codepipeline.amazonaws.com", "sns.amazonaws.com" ]
+              Service: [ "s3.amazonaws.com", "dynamodb.amazonaws.com", "codebuild.amazonaws.com", "codepipeline.amazonaws.com", "sns.amazonaws.com", "ec2.amazonaws.com" ]
   # Infra Provisioning role policy
-  InfraProvisioningPolicy:
+  WorkshopAdminPolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: InfraProvisioningPolicy
-      Roles: [ !Ref InfraProvisioningRole ]
+      PolicyName: WorkshopAdminPolicy
+      Roles: [ !Ref WorkShopAdminRole ]
       PolicyDocument:
+        Version: "2012-10-17"
         Statement:
           - Action: "*"
             Effect: Allow
             Resource: "*"
-
+  AdminInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles:
+        - !Ref WorkShopAdminRole
+      InstanceProfileName: !Ref WorkShopAdminRoleName
 Outputs:
-  BucketName:
-    Description: The S3 bucket created
-    Value: !Ref TerraformBackendBucket
-    Export:
-      Name: "Backend-Bucket-Name"
-  TableName:
-    Description: The DDB Table created
-    Value: !Ref TerraformBackendLockTable
-    Export:
-      Name: "Backend-lock-Table"
   RoleArn:
     Description: The IAM role created
-    Value: !GetAtt  InfraProvisioningRole.Arn
+    Value: !GetAtt  WorkShopAdminRole.Arn
     Export:
-      Name: "iam-role"
+      Name: "admin-iam-role"

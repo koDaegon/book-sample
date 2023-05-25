@@ -49,7 +49,7 @@ phases:
     commands:
       - |
         echo "### Pushing Container Image Tag to SSM###"
-        aws ssm put-parameter --name $IMAGE_TAG_KEY --value $IMAGE_TAG --overwrite
+        aws ssm put-parameter --name $IMAGE_TAG_KEY --value $IMAGE_TAG --type String --region $REGION --overwrite
       - echo "${IMAGE_TAG}" >> build_output.txt
 artifacts:
   files:

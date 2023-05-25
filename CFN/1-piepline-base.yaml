@@ -11,16 +11,16 @@ Parameters:
     Description: Repository branch name
     Type: String
     Default: main
-  PipelineServiceRoleArn:
-    Description: Pipeline service role ARN
+  PipelineServiceRoleName:
+    Description: Pipeline service role name
     Type: String
-    Default: arn:aws:iam::account-id:role/roleName
+    Default: pipeline-role
   RepositoryName:
     Description: Repository name
     Type: String
     Default: app-repo
-  ArtifactBucket:
-    Description: S3 Location for artifacts
+  ArtifactBucketName:
+    Description: S3 Location for artifacts name
     Type: String
     Default: ci-results-bucket 
   BuildComputeType:
@@ -42,10 +42,57 @@ Parameters:
     Default: LINUX_CONTAINER
 
 Resources:
+  AmazonCloudWatchEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        -
+          PolicyName: cwe-pipeline-execution
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref Pipeline ] ]
+  AmazonCloudWatchEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventPattern:
+        source:
+          - aws.codecommit
+        detail-type:
+          - 'CodeCommit Repository State Change'
+        resources:
+          - !Join [ '', [ 'arn:aws:codecommit:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref RepositoryName ] ]
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceType:
+            - branch
+          referenceName:
+            - main
+      Targets:
+        -
+          Arn: 
+            !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref Pipeline ] ]
+          RoleArn: !GetAtt AmazonCloudWatchEventRole.Arn
+          Id: codepipeline-AppPipeline
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !Ref PipelineServiceRoleArn
+      RoleArn: !GetAtt PipelineServiceRole.Arn
       Name: !Join
         - "-"
         - - !Ref RepositoryName
@@ -54,7 +101,7 @@ Resources:
       Stages:
         - Name: Source
           Actions:
-            - Name: Source
+            - Name: SourceAction
               RunOrder: 1
               ActionTypeId:
                 Category: Source
@@ -66,7 +113,7 @@ Resources:
               Configuration:
                 RepositoryName: !Ref RepositoryName
                 BranchName: !Ref Branch
-                PollForSourceChanges: true
+                PollForSourceChanges: false
         - Name: Build
           Actions:
             - Name: Build
@@ -118,7 +165,7 @@ Resources:
         - - !Ref RepositoryName
           - "Build"
           - !Join ['-', !Split ['/', !Ref Branch]]
-      ServiceRole: !Ref PipelineServiceRoleArn
+      ServiceRole: !GetAtt PipelineServiceRole.Arn
       Artifacts:
         Type: CODEPIPELINE
       Environment:
@@ -134,7 +181,7 @@ Resources:
           - Name: SERVICE_NAME
             Value: !Ref RepositoryName
           - Name: SERVICE_ARN
-            Value: !Ref PipelineServiceRoleArn
+            Value: !GetAtt PipelineServiceRole.Arn
           - Name: ECR_REPO
             Value: !Ref ECRRepository
       Source:
@@ -151,7 +198,7 @@ Resources:
         - - !Ref RepositoryName
           - "Deploy"
           - !Join ['-', !Split ['/', !Ref Branch]]
-      ServiceRole: !Ref PipelineServiceRoleArn
+      ServiceRole: !GetAtt PipelineServiceRole.Arn
       Artifacts:
         Type: CODEPIPELINE
       Environment:
@@ -169,7 +216,7 @@ Resources:
           - Name: SERVICE_NAME
             Value: !Ref RepositoryName
           - Name: SERVICE_ARN
-            Value: !Ref PipelineServiceRoleArn
+            Value: !GetAtt PipelineServiceRole.Arn
           - Name: ECR_REPO
             Value: !Ref ECRRepository
       Source:
@@ -187,3 +234,61 @@ Resources:
       Type: String
       Value: default
       Description: Main branch image tag
+  # Infra Provisioning Role
+  PipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref PipelineServiceRoleName
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: [ "sts:AssumeRole" ]
+            Effect: Allow
+            Principal:
+              Service: [ "s3.amazonaws.com", "dynamodb.amazonaws.com", "codebuild.amazonaws.com", "codepipeline.amazonaws.com", "sns.amazonaws.com" ]
+  # Infra Provisioning role policy
+  PipelinePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: PipelinePolicy
+      Roles: [ !Ref PipelineServiceRole ]
+      PolicyDocument:
+        Statement:
+          - Action: "*"
+            Effect: Allow
+            Resource: "*"
+  # S3 Bucket for saving pipeline artifact
+  ArtifactBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref ArtifactBucketName
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+  # Bucket policy for artifact bucket
+  ArtifactBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: BucketAccess
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${AWS::AccountId}:root
+                - !GetAtt PipelineServiceRole.Arn
+            Action: 
+              - "s3:*"
+            Resource:
+              - !Sub "arn:aws:s3:::${ArtifactBucket}"
+              - !Sub "arn:aws:s3:::${ArtifactBucket}/*"
