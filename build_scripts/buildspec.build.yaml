@@ -4,7 +4,7 @@ env:
   git-credential-helper: yes
   variables:
     REGION: "ap-northeast-2"
-    IMAGE_TAG_KEY: "/book/sample/main/tag"
+    IMAGE_TAG_KEY: "/book/api/main/tag"
 phases:
   install:
     runtime-versions:

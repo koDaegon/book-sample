@@ -1,0 +1,21 @@
+namespace:
+  name: test
+app:
+  name: app-demo
+deployment:
+  name: deployment-demo
+  replicas: 2
+image:
+  repository: ${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-2.amazonaws.com/${ECR_REPO}
+  tag: ${IMAGE_TAG}
+container:
+  port: 8080
+service:
+  name: service-demo
+  type: NodePort
+  port: 80
+
+ingress:
+  name: ingress-demo
+  subnetA: ${PUB_SUB_A}
+  subnetC: ${PUB_SUB_C}

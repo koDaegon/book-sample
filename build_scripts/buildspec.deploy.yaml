@@ -3,7 +3,7 @@ env:
   git-credential-helper: yes
   parameter-store:
     ASSUME_ROLE: /eks/role/arn
-    IMAGE_TAG: /book/sample/main/tag
+    IMAGE_TAG: /book/api/main/tag
     PUB_SUB_A: /base/pub/subnet/a
     PUB_SUB_C: /base/pub/subnet/c
   variables:

@@ -22,6 +22,11 @@ public class BookController {
     private final BookService bookService;
     private final CommonBookMapper commonBookMapper;
 
+    @GetMapping("/")
+    public String echo() {
+        return "Hello World";
+    }
+
     @GetMapping("/{value}")
     public String echo(@PathVariable String value) {
         return "Request Url : " + value;
