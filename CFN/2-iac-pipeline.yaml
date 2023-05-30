@@ -1,0 +1,304 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create a S3 bucket and DynamoDB table for Terraform Backend and IaC Pipeline
+Parameters:
+  BucketName:
+    Description: "Name of the S3 Bucket you want to create for Terraform Backend"
+    Type: String
+  DDBTableName:
+    Description: "Name of the DDB Table you want to create for Terraform Backend"
+    Type: String
+  InfraProvisioningRoleArn:
+    Description: "Name of the IAM Role you want to create for Terraform Backend"
+    Type: String
+  BuildImageName:
+    Description: Docker image for application build
+    Type: String
+    Default: aws/codebuild/standard:5.0
+  Branch:
+    Description: Repository branch name
+    Type: String
+    Default: main
+  RepositoryName:
+    Description: Repository name
+    Type: String
+    Default: app-repo
+  BuildComputeType:
+    Description: Define a compute type when it runs on a build process
+    Type: String
+    AllowedValues:
+      - BUILD_GENERAL1_SMALL
+      - BUILD_GENERAL1_MEDIUM
+      - BUILD_GENERAL1_LARGE
+      - BUILD_GENERAL1_2XLARGE
+    Default: BUILD_GENERAL1_MEDIUM
+  EnvironmentType:
+    Description: Environment type for CodeBuild environment
+    Type: String
+    AllowedValues:
+      - LINUX_CONTAINER
+      - LINUX_GPU_CONTAINER
+      - ARM_CONTAINER
+    Default: LINUX_CONTAINER
+
+Resources:
+  # S3 Bucket for Terraform State
+  TerraformBackendBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+  # Bucket policy for Terrafrom State
+  TerraformBackendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref TerraformBackendBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: BucketAccess
+            Effect: Allow
+            Principal:
+              AWS:
+                - !Sub arn:aws:iam::${AWS::AccountId}:root
+                - !Ref InfraProvisioningRoleArn
+            Action: 
+              - "s3:*"
+            Resource:
+              - !Sub "arn:aws:s3:::${TerraformBackendBucket}"
+              - !Sub "arn:aws:s3:::${TerraformBackendBucket}/*"
+  # DynamoDB for State locking
+  TerraformBackendLockTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref DDBTableName
+      BillingMode: PROVISIONED
+      AttributeDefinitions:
+        - AttributeName: "LockID"
+          AttributeType: "S"
+      KeySchema: 
+        - AttributeName: LockID
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+
+      Tags: 
+        - Key: Name
+          Value: !Sub TableName
+  # # Infra Provisioning Role
+  # InfraProvisioningRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     RoleName: !Ref InfraProvisioningRoleName
+  #     AssumeRolePolicyDocument:
+  #       Version: 2012-10-17
+  #       Statement:
+  #         - Action: [ "sts:AssumeRole" ]
+  #           Effect: Allow
+  #           Principal:
+  #             Service: [ "s3.amazonaws.com", "dynamodb.amazonaws.com", "codebuild.amazonaws.com", "codepipeline.amazonaws.com", "sns.amazonaws.com" ]
+  # # Infra Provisioning role policy
+  # InfraProvisioningPolicy:
+  #   Type: AWS::IAM::Policy
+  #   Properties:
+  #     PolicyName: InfraProvisioningPolicy
+  #     Roles: [ !Ref InfraProvisioningRole ]
+  #     PolicyDocument:
+  #       Statement:
+  #         - Action: "*"
+  #           Effect: Allow
+  #           Resource: "*"
+  # Pipeline Execution Role
+  AmazonCloudWatchEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        -
+          PolicyName: cwe-pipeline-execution
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              -
+                Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref Pipeline ] ]
+  # Pipeline Rule
+  AmazonCloudWatchEventRule:
+    Type: AWS::Events::Rule
+    Properties:
+      EventPattern:
+        source:
+          - aws.codecommit
+        detail-type:
+          - 'CodeCommit Repository State Change'
+        resources:
+          - !Join [ '', [ 'arn:aws:codecommit:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref RepositoryName ] ]
+        detail:
+          event:
+            - referenceCreated
+            - referenceUpdated
+          referenceType:
+            - branch
+          referenceName:
+            - main
+      Targets:
+        -
+          Arn: 
+            !Join [ '', [ 'arn:aws:codepipeline:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':', !Ref Pipeline ] ]
+          RoleArn: !GetAtt AmazonCloudWatchEventRole.Arn
+          Id: codepipeline-AppPipeline
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !Ref InfraProvisioningRoleArn
+      Name: !Join
+        - "-"
+        - - !Ref RepositoryName
+          - "pipeline"
+          - !Join ['-', !Split ['/', !Ref Branch]]
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              RunOrder: 1
+              ActionTypeId:
+                Category: Source
+                Provider: CodeCommit
+                Owner: AWS
+                Version: '1'
+              OutputArtifacts:
+                - Name: Source
+              Configuration:
+                RepositoryName: !Ref RepositoryName
+                BranchName: !Ref Branch
+                PollForSourceChanges: false
+        - Name: Terraform-Test
+          Actions:
+            - Name: TerraformPlan
+              ActionTypeId:
+                Category: Build
+                Provider: CodeBuild
+                Owner: AWS
+                Version: '1'
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Source
+              Configuration:
+                ProjectName: !Ref TFPlanProject
+              OutputArtifacts:
+                - Name: IaCArtifact
+        - Name: Terraform-Approval
+          Actions:
+            - Name: ManualApproval
+              ActionTypeId:
+                Category: Approval
+                Provider: Manual
+                Owner: AWS
+                Version: '1'
+              RunOrder: 1
+              Configuration:
+                CustomData: "Please review the terraform plan before apply"
+        - Name: Terraform-Deploy
+          Actions:
+            - Name: TerraformApply
+              ActionTypeId:
+                Category: Build
+                Provider: CodeBuild
+                Owner: AWS
+                Version: '1'
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Source
+                - Name: IaCArtifact
+              Configuration:
+                ProjectName: !Ref TFDeployProject
+                PrimarySource: Source
+              OutputArtifacts:
+                - Name: DeployArtifact
+      ArtifactStore:
+        Type: S3
+        Location: !Ref TerraformBackendBucket
+  TFPlanProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Join
+        - "-"
+        - - !Ref RepositoryName
+          - "Build"
+          - !Join ['-', !Split ['/', !Ref Branch]]
+      ServiceRole: !Ref InfraProvisioningRoleArn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: !Ref EnvironmentType
+        ComputeType: !Ref BuildComputeType
+        Image: !Ref BuildImageName
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: BRANCH_NAME
+            Value: !Ref Branch
+          - Name: AWS_ACCOUNT_ID
+            Value: !Ref AWS::AccountId
+          - Name: SERVICE_NAME
+            Value: !Ref RepositoryName
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: build_scripts/buildspec.tfplan.yaml
+      Cache:
+        Type: S3
+        Location: !Ref TerraformBackendBucket
+  TFDeployProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Join
+        - "-"
+        - - !Ref RepositoryName
+          - "Deploy"
+          - !Join ['-', !Split ['/', !Ref Branch]]
+      ServiceRole: !Ref InfraProvisioningRoleArn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: !Ref EnvironmentType
+        ComputeType: !Ref BuildComputeType
+        Image: !Ref BuildImageName
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: BRANCH_NAME
+            Value: !Ref Branch
+          - Name: AWS_ACCOUNT_ID
+            Value: !Ref AWS::AccountId
+          - Name: REGION
+            Value: !Ref AWS::Region
+          - Name: SERVICE_NAME
+            Value: !Ref RepositoryName
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: build_scripts/buildspec.tfapply.yaml
+Outputs:
+  BucketName:
+    Description: The S3 bucket created
+    Value: !Ref TerraformBackendBucket
+  TableName:
+    Description: The DDB Table created
+    Value: !Ref TerraformBackendLockTable
