@@ -7,6 +7,10 @@
 
 ### [3. Helm/ArgoCD를 사용하여 GitOps 구성하기](docs/3.Helm_ArgoCD.md)
 
+### [4. IaC Pipeline 구성하여 Terraform 배포](docs/4.IaC_Pipeline_Setup.md)
+
+### [5. Argo Rollout을 이용하여 Canary 및 Blue/Green 배포](docs/5.argo_rollout.md)
+
 
 
 
