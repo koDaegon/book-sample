@@ -184,6 +184,8 @@ Resources:
             Value: !GetAtt PipelineServiceRole.Arn
           - Name: ECR_REPO
             Value: !Ref ECRRepository
+          - Name: REGION_NAME
+            Value: !Ref AWS::Region
       Source:
         Type: CODEPIPELINE
         BuildSpec: build_scripts/buildspec.build.yaml
@@ -219,6 +221,8 @@ Resources:
             Value: !GetAtt PipelineServiceRole.Arn
           - Name: ECR_REPO
             Value: !Ref ECRRepository
+          - Name: REGION_NAME
+            Value: !Ref AWS::Region
       Source:
         Type: CODEPIPELINE
         BuildSpec: build_scripts/buildspec.deploy.yaml
