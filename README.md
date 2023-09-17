@@ -5,12 +5,7 @@
 
 ### [2. AWS Native 서비스를 이용해 CI/CD 구성하기](docs/2.AWS_Native_CICD.md)
 
-### [3. Helm/ArgoCD를 사용하여 GitOps 구성하기](docs/3.Helm_ArgoCD.md)
-
-### [4. IaC Pipeline 구성하여 Terraform 배포](docs/4.IaC_Pipeline_Setup.md)
-
-### [5. Argo Rollout을 이용하여 Canary 및 Blue/Green 배포](docs/5.argo_rollout.md)
-
+### [3. Helm/ArgoCD를 이용해 Sample App GitOps 구성하기](docs/3.Helm_ArgoCD.md)
 
 
 
