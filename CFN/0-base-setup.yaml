@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Create a S3 bucket and DynamoDB table for Terraform Backend
+Description: Create VPC and Workshop role
 Parameters:
   WorkShopAdminRoleName:
-    Description: "Name of the IAM Role you want to create for Terraform Backend"
+    Description: "Name of the IAM Role you want to create for Workshop"
     Type: String
 
 Resources:
@@ -147,7 +147,7 @@ Resources:
             Effect: Allow
             Principal:
               Service: [ "s3.amazonaws.com", "dynamodb.amazonaws.com", "codebuild.amazonaws.com", "codepipeline.amazonaws.com", "sns.amazonaws.com", "ec2.amazonaws.com" ]
-  # Infra Provisioning role policy
+  # Workshop role policy
   WorkshopAdminPolicy:
     Type: AWS::IAM::Policy
     Properties:
