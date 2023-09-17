@@ -2,9 +2,6 @@ version: 0.2
 env:
   shell: bash
   git-credential-helper: yes
-  variables:
-    REGION: "ap-northeast-2"
-    IMAGE_TAG_KEY: "/book/api/main/tag"
 phases:
   install:
     runtime-versions:
@@ -18,11 +15,11 @@ phases:
       - aws --version
       - export MY_ECR="${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-2.amazonaws.com/${ECR_REPO}"
       - echo "### SRC_VERISON-> ${CODEBUILD_RESOLVED_SOURCE_VERSION} | Logginging to ECR"
-      - docker login --username AWS -p $(aws ecr get-login-password --region ${REGION}) ${MY_ECR}
+      - docker login --username AWS -p $(aws ecr get-login-password --region ${REGION_NAME}) ${MY_ECR}
       - export TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION}
       - export TAG=$(echo $TAG | sed -e "s/\.//g"| tr '[:upper:]' '[:lower:]')
       - export TAG=$(echo "${TAG:0:8}")
-      - export IMAGE_TAG="${TAG}"
+      - export IMAGE_TAG="dev-${TAG}"
       - export REPOSITORY_URI="${MY_ECR}"
       - echo "## TAG-> ${TAG}"
       - |
@@ -49,7 +46,7 @@ phases:
     commands:
       - |
         echo "### Pushing Container Image Tag to SSM###"
-        aws ssm put-parameter --name $IMAGE_TAG_KEY --value $IMAGE_TAG --type String --region $REGION --overwrite
+        aws ssm put-parameter --name /book/sample/main/tag --value ${IMAGE_TAG} --type String --region $REGION_NAME --overwrite
       - echo "${IMAGE_TAG}" >> build_output.txt
 artifacts:
   files:
