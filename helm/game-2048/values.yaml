@@ -1,0 +1,21 @@
+namespace:
+  name: argo-2048
+app:
+  name: argo-2048
+deployment:
+  name: deployment-2048
+  replicas: 2
+image:
+  repository: public.ecr.aws/l6m2t8p7/docker-2048
+  tag: latest
+container:
+  port: 80
+service:
+  name: service-2048
+  type: NodePort
+  port: 80
+
+ingress:
+  name: ingress-2048
+  subnetA: subnet-0f1bbc5f8d8e4a709
+  subnetC: subnet-000052242ec060d57
