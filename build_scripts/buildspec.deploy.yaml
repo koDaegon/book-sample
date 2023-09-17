@@ -3,7 +3,7 @@ env:
   git-credential-helper: yes
   parameter-store:
     ASSUME_ROLE: /eks/role/arn
-    IMAGE_TAG: /book/api/main/tag
+    IMAGE_TAG: /book/sample/main/tag
     PUB_SUB_A: /base/pub/subnet/a
     PUB_SUB_C: /base/pub/subnet/c
   variables:
@@ -13,7 +13,7 @@ phases:
   install:
     commands:
       - echo "Install kubectl ..."
-      - curl -LO "https://dl.k8s.io/release/v1.25.10/bin/linux/amd64/kubectl"
+      - curl -LO "https://s3.us-west-2.amazonaws.com/amazon-eks/1.27.1/2023-04-19/bin/linux/amd64/kubectl"
       - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
       - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
       - chmod 700 get_helm.sh
@@ -26,7 +26,7 @@ phases:
         kubectl version --client
         helm version
 
-      - export MY_ECR="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${ECR_REPO}"
+      - export MY_ECR="${AWS_ACCOUNT_ID}.dkr.ecr.${REGION_NAME}.amazonaws.com/${ECR_REPO}"
       - echo ${IMAGE_TAG}
       - echo ${MY_ECR}
       - |
@@ -47,7 +47,7 @@ phases:
         export AWS_SECRET_ACCESS_KEY=$(cat config.json | jq ".Credentials.SecretAccessKey" | tr -d '"')
         export AWS_SESSION_TOKEN=$(cat config.json | jq ".Credentials.SessionToken" | tr -d '"')
         
-        aws eks --region ap-northeast-2 update-kubeconfig --name $CLUSTER_NAME
+        aws eks --region ${REGION_NAME} update-kubeconfig --name $CLUSTER_NAME
 
       - |
         echo "### Deploy k8s manifest file"
