@@ -2,15 +2,15 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: <Cluster-name> # 생성할 EKS 클러스터명
+  name: <CLUSTER_NAME> # 생성할 EKS 클러스터명
   region: ap-northeast-2 # 클러스터를 생성할 리전
-  version: "1.23"
+  version: "1.27"
 
 vpc:
   subnets:
     private:
-      ap-northeast-2a: { id: <Private-Subnet-id-1> }
-      ap-northeast-2b: { id: <Private-Subnet-id-2> }
+      ap-northeast-2a: { id: <Private-Subnet-id-1> } #Private Subnet A ID로 대체
+      ap-northeast-2c: { id: <Private-Subnet-id-2> } #Private Subnet C ID로 대체
 
 managedNodeGroups:
   - name: node-group # 클러스터의 노드 그룹명
