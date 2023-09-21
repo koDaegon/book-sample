@@ -5,7 +5,7 @@
 
 ### [2. AWS Native 서비스를 이용해 CI/CD 구성하기](docs/2.AWS_Native_CICD.md)
 
-### [3. Helm/ArgoCD를 이용해 Sample App GitOps 구성하기](docs/3.Helm_ArgoCD.md)
+### [3. Helm/ArgoCD를 이용해 GitOps 구성하기](docs/3.Helm_ArgoCD.md)
 
 
 
