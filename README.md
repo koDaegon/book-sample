@@ -7,7 +7,7 @@
 
 ### [3. Helm/ArgoCD를 이용해 GitOps 구성하기](docs/3.Helm_ArgoCD.md)
 
-
+### [4. Terraform으로 인프라 배포하기](docs/4.4.IaC_Pipeline_Setup.md)
 
 ## 실습 아키텍처
 
