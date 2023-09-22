@@ -17,4 +17,5 @@
 
 
 ### ArgoCD를 활용한 GitOps
-![argo-cd](https://user-images.githubusercontent.com/47220755/153104957-9123d6a0-c6a6-4500-b1b6-537bf1308e40.jpg)
+<img width="717" alt="image" src="https://github.com/koDaegon/book-sample/assets/47220755/31a420f1-c4df-486b-b955-77a9bb81197f">
+
