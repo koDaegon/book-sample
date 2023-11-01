@@ -1,10 +1,10 @@
-FROM adoptopenjdk:11-jre-hotspot as builder
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:11 as builder
 WORKDIR /application
 ARG JAR_FILE=build/libs/*.jar
 COPY ${JAR_FILE} application.jar
 RUN java -Djarmode=layertools -jar application.jar extract
 
-FROM adoptopenjdk:11-jre-hotspot
+FROM public.ecr.aws/amazoncorretto/amazoncorretto:11
 WORKDIR /application
 COPY --from=builder /application/dependencies/ ./
 COPY --from=builder /application/spring-boot-loader/ ./

@@ -6,8 +6,7 @@ env:
     IMAGE_TAG: /book/sample/main/tag
     PUB_SUB_A: /base/pub/subnet/a
     PUB_SUB_C: /base/pub/subnet/c
-  variables:
-    CLUSTER_NAME: eks-kdaegon
+    CLUSTER_NAME: /eks/cluster/name
 
 phases:
   install:

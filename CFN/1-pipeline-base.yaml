@@ -249,7 +249,7 @@ Resources:
           - Action: [ "sts:AssumeRole" ]
             Effect: Allow
             Principal:
-              Service: [ "s3.amazonaws.com", "dynamodb.amazonaws.com", "codebuild.amazonaws.com", "codepipeline.amazonaws.com", "sns.amazonaws.com" ]
+              Service: [ "s3.amazonaws.com", "codebuild.amazonaws.com", "codepipeline.amazonaws.com", "sns.amazonaws.com" ]
   # Infra Provisioning role policy
   PipelinePolicy:
     Type: AWS::IAM::Policy
@@ -265,7 +265,7 @@ Resources:
   ArtifactBucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Ref ArtifactBucketName
+      BucketName: !Sub "${ArtifactBucketName}-${AWS::AccountId}"
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
